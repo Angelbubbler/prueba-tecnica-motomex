@@ -23,6 +23,9 @@ Claro. Tenemos Batería automotriz LTH L-47-650 que puede ser compatible de form
 
 * **Lead registrado:** Estado **incompleto**, almacenando `producto_interes = Bateria automotriz LTH L-47-650` y `vehiculo = Nissan Versa`.
 
+### Evidencia Visual
+![Caso 1](caso1.png)
+
 ---
 
 ## Caso 2: Cliente da Datos
@@ -38,6 +41,9 @@ Gracias, Carlos. Batería automotriz LTH L-47-650 está disponible en Monterrey,
 ```
 
 * **Lead registrado:** El mismo lead de la sesión se actualiza guardando el nombre (*Carlos*), ciudad (*Monterrey*), estado (*Nuevo León*) y el año del vehículo (*2020*). El estado del lead sigue siendo **incompleto** hasta que se confirme la compra y se proporcione la dirección de envío.
+
+### Evidencia Visual
+![Caso 2](caso2.png)
 
 ---
 
@@ -68,6 +74,9 @@ Gracias. Registré tu solicitud de compra y la dirección de envío. Un asesor p
 }
 ```
 
+### Evidencia Visual
+![Caso 3](caso3.png)
+
 ---
 
 ## Caso 4: Producto Ambiguo
@@ -84,6 +93,9 @@ Claro. Para ayudarte mejor, ¿me puedes compartir el modelo, año de tu vehícul
 
 * **Lead registrado:** Estado **incompleto**, identificando como producto de interés *Balatas delanteras Bosch BP-1290*, pero con los datos del vehículo y ubicación marcados como pendientes para evitar suposiciones incorrectas.
 
+### Evidencia Visual
+![Caso 4](caso4.png)
+
 ---
 
 ## Caso 5: Producto Fuera de Catálogo
@@ -99,3 +111,6 @@ Por ahora no encontré filtro de aceite para Nissan March en el catálogo dispon
 ```
 
 * **Lead registrado:** Estado **incompleto**, identificando que el producto de interés es un *filtro de aceite* para *Nissan March*, y solicitando los datos personales y de ubicación del cliente para que un vendedor le dé seguimiento de forma offline.
+
+### Evidencia Visual
+![Caso 5](caso5.png)
