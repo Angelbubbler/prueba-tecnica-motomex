@@ -1,21 +1,44 @@
-# Arquitectura
+# Arquitectura del Sistema
 
-La solucion separa la interpretacion conversacional de la logica comercial. El LLM local se usa para entender mensajes de clientes y extraer entidades, mientras que la API decide que productos existen, que precio tienen, donde estan disponibles y cuantas unidades hay.
+La solución implementada separa rigurosamente la **interpretación conversacional** de la **lógica comercial**. El modelo de lenguaje (LLM) local se utiliza exclusivamente para comprender los mensajes del cliente y extraer intenciones y entidades, mientras que la API y la base de datos controlan con total exactitud qué productos existen, sus precios reales, su ubicación física y su stock disponible.
 
-## Componentes
+---
 
-- **FastAPI:** expone `/productos`, `/disponibilidad` y `/leads`.
-- **SQLite:** almacena catalogo estructurado y leads.
-- **Seed de catalogo:** transforma el texto de la prueba en datos validados. Puede intentar LM Studio con `--use-llm`, pero conserva un catalogo validado para reproducibilidad.
-- **n8n:** orquesta mensajes, llamadas al LLM local y llamadas a la API.
-- **LM Studio:** proveedor local compatible con OpenAI, configurado con `meta-llama-3.1-8b-instruct`.
+## Componentes del Sistema
 
-## Limites De La IA
+1. **FastAPI (API de Negocio):**
+   * Expone los endpoints principales `/productos`, `/disponibilidad` y `/leads` necesarios para el flujo comercial.
+   * Cuenta con un probador web interactivo premium en `/tester` para facilitar la simulación y validación de casos de prueba.
 
-La IA no puede inventar precios, stock, ubicaciones ni compatibilidades. Si un producto no aparece en la API, el bot debe decir que no lo encontro y registrar la solicitud para seguimiento humano.
+2. **SQLite (Base de Datos):**
+   * Almacena de forma relacional el catálogo de refacciones estructurado y el registro histórico de leads de clientes.
+   * Utiliza la función personalizada `remove_accents` para que todas las búsquedas sean insensibles a los acentos en español.
 
-La compatibilidad se expresa como general porque el texto fuente no contiene anio, version ni motor exacto para todos los productos. Cuando el cliente pide confirmacion definitiva, el flujo marca el caso para asesor.
+3. **Script de Inicialización (`seed_catalog.py`):**
+   * Transforma el texto fuente en prosa a datos JSON estructurados y validados con Pydantic.
+   * Soporta extracción asistida por IA local con el argumento `--use-llm` o mediante un catálogo de respaldo validado para asegurar reproducibilidad.
 
-## Escalabilidad
+4. **n8n (Orquestador del Chatbot):**
+   * Gestiona el flujo conversacional, enruta los mensajes entrantes, coordina las llamadas al LLM local para clasificar intenciones y conecta con la API de FastAPI.
 
-Con 10,000 productos convendria migrar a PostgreSQL, agregar indices por marca/modelo/categoria/ciudad y probablemente busqueda semantica o full-text search. La API y n8n podrian mantenerse, pero la busqueda simple `LIKE` deberia reemplazarse por un motor mas robusto.
+5. **LM Studio (Servidor de IA):**
+   * Provee la inferencia del modelo de lenguaje local (configurado con `meta-llama-3.1-8b-instruct`), simulando una integración de bajo costo y alta privacidad.
+
+---
+
+## Límites de la Inteligencia Artificial
+
+La IA **no tiene permitido inventar ni adivinar** precios, existencias en stock, ubicaciones de sucursales ni compatibilidades técnicas avanzadas. Si un producto no se encuentra disponible en la API:
+* El chatbot responde de forma determinista indicando que no encontró el producto en el catálogo.
+* Ofrece registrar los datos personales del cliente para que un asesor humano lo asista.
+
+La compatibilidad de las piezas se maneja en el catálogo como **"general"** debido a las limitaciones del texto fuente (el cual carece de especificaciones precisas como el año o motor exacto para todas las refacciones). Cuando el cliente solicita continuar con la compra, el flujo en n8n captura la dirección de envío y marca el lead como completo para que sea validado manualmente por un asesor experto antes de procesar el pedido físico.
+
+---
+
+## Escalabilidad del Sistema
+
+Para escalar este prototipo a un entorno de producción real con **10,000 o más productos**, se sugieren las siguientes mejoras estructurales:
+* **Base de Datos:** Migrar de SQLite a PostgreSQL e implementar índices compuestos sobre las columnas `marca`, `modelo`, `categoría` y `ciudad`.
+* **Motor de Búsqueda:** Reemplazar las búsquedas simples por texto `LIKE` con un motor de búsqueda avanzada como PostgreSQL Full-Text Search o Elasticsearch.
+* **Búsqueda Semántica:** Incorporar un modelo de Embeddings para realizar búsquedas vectoriales y recuperar de forma semántica las refacciones candidatas más óptimas según el lenguaje natural del cliente.
