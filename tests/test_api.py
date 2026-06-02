@@ -53,6 +53,18 @@ def test_product_filters_and_leads(tmp_path, monkeypatch):
     assert response.status_code == 200
     assert response.json() == []
 
+    # Test accent insensitivity
+    response = client.get("/productos", params={"ciudad": "León"})
+    assert response.status_code == 200
+    assert len(response.json()) == 1
+    assert response.json()[0]["ciudad"] == "Leon"
+
+    response = client.get("/productos", params={"ciudad": "Querétaro"})
+    assert response.status_code == 200
+    assert len(response.json()) == 1
+    assert response.json()[0]["ciudad"] == "Queretaro"
+
+
     incomplete = client.post(
         "/leads",
         json={
