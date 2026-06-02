@@ -1,0 +1,10 @@
+{
+  "nombre": "Carlos",
+  "ciudad": "Monterrey",
+  "estado": "Nuevo Leon",
+  "producto_interes": "Bateria automotriz LTH L-47-650",
+  "vehiculo": "Nissan Versa",
+  "anio_vehiculo": "2020",
+  "direccion_envio": "Av. Universidad 123, Colonia Centro, Monterrey, Nuevo Leon, C.P. 64000.",
+  "lead_completo": true
+}

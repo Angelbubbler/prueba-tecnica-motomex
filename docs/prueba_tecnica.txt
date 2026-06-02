@@ -1,0 +1,369 @@
+Prueba Técnica — Automatizaciones e IA
+
+Contexto del caso
+
+Una empresa dedicada a la venta de refacciones automotrices ha incrementado sus ventas durante el último año. La mayoría de sus ventas y conversaciones con clientes ocurren por WhatsApp. Debido al aumento en volumen, los clientes hacen cada vez más preguntas sobre productos, disponibilidad, precios y compatibilidad. Actualmente, la empresa no cuenta con toda esta información estructurada en una base de datos, sino en textos descriptivos de productos.
+
+La dirección de la empresa quiere implementar un chatbot con IA que pueda atender clientes por WhatsApp, vender refacciones directamente, recomendar productos compatibles y cerrar ventas sin intervención humana.
+
+Nota importante para el candidato
+
+La empresa puede tener una idea inicial de lo que necesita, pero tú eres el especialista técnico. No estás obligado a aceptar todos los requerimientos tal como están planteados. Si identificas riesgos, malas prácticas o una mejor alternativa, debes mencionarlo, justificarlo y proponer una solución más adecuada.
+
+Se evaluará tu capacidad para:
+
+Cuestionar decisiones de negocio cuando sea necesario
+
+Detectar riesgos técnicos y operativos
+
+Definir límites razonables para el uso de IA
+
+Proponer una arquitectura mantenible
+
+Explicar tus decisiones con claridad
+
+Objetivo
+
+Construir una solución de automatización e IA que permita:
+
+Extraer información de productos desde texto en prosa.
+
+Convertir esa información en datos estructurados.
+
+Almacenar el catálogo en una base de datos.
+
+Exponer la información mediante una API.
+
+Crear un chatbot en n8n que consulte esa API.
+
+Capturar información de nuevos clientes.
+
+Registrar leads para seguimiento comercial.
+
+Catálogo inicial en texto no estructurado
+
+A partir del siguiente texto, deberás extraer la información relevante de cada producto:
+
+La batería LTH L-47-650 es una batería automotriz recomendada para vehículos compactos y sedanes medianos. Tiene una capacidad de 650 amperes de arranque en frío y voltaje de 12V. Su precio es de $2,450 MXN. Actualmente se encuentra disponible en Monterrey, Nuevo León, con 8 unidades en stock. Es compatible de forma general con modelos como Nissan Versa, Chevrolet Aveo y Volkswagen Jetta, aunque se recomienda validar el año y versión del vehículo antes de confirmar la venta.
+
+Las balatas delanteras Bosch BP-1290 están diseñadas para vehículos tipo sedán de uso urbano. Su precio es de $780 MXN. Están disponibles en Guadalajara, Jalisco, con 15 unidades en stock. Son compatibles de forma general con Nissan Sentra, Renault Fluence y algunos modelos de Nissan Tiida. Incluyen material cerámico de baja generación de ruido y están recomendadas para conducción diaria en ciudad.
+
+El amortiguador Monroe M-3245 es una refacción para suspensión delantera, recomendado para SUVs compactas. Su precio es de $1,350 MXN por pieza. Actualmente se encuentra disponible en Puebla, Puebla, con 6 unidades en stock. Es compatible de forma general con Honda CR-V, Toyota RAV4 y Mazda CX-5, dependiendo del año y versión del vehículo.
+
+El filtro de aceite Fram PH-6607 es una refacción de mantenimiento preventivo para motores de 4 cilindros de cilindrada mediana. Su precio es de $185 MXN. Se encuentra disponible en Ciudad de México, con 42 unidades en stock. Es compatible de forma general con Toyota Corolla, Honda Civic y Nissan Sentra de distintas generaciones.
+
+La banda de distribución Gates T-186 es un componente esencial del sistema de distribución del motor. Su precio es de $620 MXN. Está disponible en Querétaro, Querétaro, con 11 unidades en stock. Es compatible de forma general con Volkswagen Polo, Seat Ibiza y Chevrolet Aveo en versiones con motor de 1.6 litros.
+
+La bomba de agua GMB GWH-780 es una refacción del sistema de refrigeración del motor. Su precio es de $950 MXN. Actualmente se encuentra disponible en León, Guanajuato, con 5 unidades en stock. Es compatible de forma general con Nissan Tsuru, Nissan Sentra B13 y algunos modelos de Nissan Platina con motor GA16.
+
+Parte 1: Extracción y estructuración del catálogo
+
+Deberás construir un proceso que tome el texto anterior y lo convierta en datos estructurados. El resultado esperado debe contener, como mínimo:
+
+{
+
+  "marca": "string",
+
+  "modelo": "string",
+
+  "categoria": "string",
+
+  "precio": "number",
+
+  "moneda": "string",
+
+  "ciudad": "string",
+
+  "estado": "string",
+
+  "stock": "number",
+
+  "compatibilidad_general": ["string"],
+
+  "especificaciones": {
+
+    "campo": "valor"
+
+  }
+
+}
+
+Ejemplo aproximado de salida esperada:
+
+{
+
+  "marca": "LTH",
+
+  "modelo": "L-47-650",
+
+  "categoria": "Batería automotriz",
+
+  "precio": 2450,
+
+  "moneda": "MXN",
+
+  "ciudad": "Monterrey",
+
+  "estado": "Nuevo León",
+
+  "stock": 8,
+
+  "compatibilidad_general": ["Nissan Versa", "Chevrolet Aveo", "Volkswagen Jetta"],
+
+  "especificaciones": {
+
+    "voltaje": "12V",
+
+    "amperes_arranque_frio": "650 CCA"
+
+  }
+
+}
+
+Parte 2: Base de datos
+
+Deberás almacenar el catálogo extraído en una base de datos. Puedes usar la tecnología que prefieras, por ejemplo: PostgreSQL, MySQL, MongoDB o SQLite.
+
+También deberás guardar los leads capturados por el chatbot. Campos mínimos del lead:
+
+{
+
+  "nombre": "string | null",
+
+  "ciudad": "string | null",
+
+  "estado": "string | null",
+
+  "producto_interes": "string | null",
+
+  "vehiculo": "string | null",
+
+  "anio_vehiculo": "string | null",
+
+  "direccion_envio": "string | null",
+
+  "lead_completo": "boolean",
+
+  "created_at": "datetime"
+
+}
+
+Parte 3: API
+
+Deberás crear un servicio/API que permita consultar la información del catálogo. La API debe permitir, como mínimo:
+
+Consultar todos los productos
+
+Consultar un producto por modelo, marca o categoría
+
+Consultar disponibilidad por ciudad/estado
+
+Registrar un lead
+
+Ejemplos de endpoints posibles:
+
+GET /productos
+
+GET /productos?modelo=L-47-650
+
+GET /productos?categoria=bateria
+
+GET /productos?ciudad=Monterrey
+
+POST /leads
+
+Parte 4: Chatbot en n8n
+
+Deberás construir un chatbot usando n8n como orquestador principal. El chatbot debe recibir mensajes de clientes, interpretar la solicitud, consultar la API y capturar la información del cliente.
+
+El chatbot debe capturar:
+
+{
+
+  "nombre": "string | null",
+
+  "ciudad": "string | null",
+
+  "estado": "string | null",
+
+  "producto_interes": "string | null",
+
+  "vehiculo": "string | null",
+
+  "anio_vehiculo": "string | null",
+
+  "desea_comprar": "boolean | null",
+
+  "direccion_envio": "string | null"
+
+}
+
+Reglas del chatbot
+
+El chatbot debe:
+
+Responder dudas básicas sobre productos
+
+Consultar la información desde la API
+
+No inventar precios, stock, disponibilidad ni compatibilidades
+
+Pedir únicamente los datos faltantes
+
+Capturar progresivamente la información del cliente
+
+Registrar el lead
+
+Detectar intención de compra
+
+Si el cliente desea comprar, capturar la dirección de envío
+
+Canalizar o marcar para asesor cuando se requiera validación humana
+
+Restricciones
+
+El catálogo debe extraerse desde el texto en prosa.
+
+La información comercial debe venir desde la base de datos/API.
+
+El chatbot no puede inventar datos técnicos.
+
+La lógica crítica del negocio no debe depender únicamente del modelo de IA.
+
+El candidato debe explicar qué partes resolvió con IA y qué partes con lógica determinista.
+
+Casos mínimos de prueba
+
+Caso 1: Búsqueda general
+
+Cliente:
+
+Hola, busco una batería para un Versa.
+
+Respuesta esperada:
+
+Claro. Tenemos una batería LTH L-47-650 que puede ser compatible de forma general con Nissan Versa. Para validar mejor, ¿me puedes compartir el año de tu vehículo y en qué ciudad te encuentras?
+
+Caso 2: Cliente da datos
+
+Cliente:
+
+Soy Carlos, estoy en Monterrey, Nuevo León. Mi Versa es 2020.
+
+Respuesta esperada:
+
+Gracias, Carlos. La batería LTH L-47-650 está disponible en Monterrey, Nuevo León, con 8 unidades en stock y tiene un precio de $2,450 MXN. ¿Deseas continuar con la compra o prefieres que un asesor revise primero compatibilidad?
+
+Caso 3: Cliente quiere comprar
+
+Al finalizar el flujo de captura, el sistema debe registrar:
+
+{
+
+  "nombre": "Carlos",
+
+  "ciudad": "Monterrey",
+
+  "estado": "Nuevo León",
+
+  "producto_interes": "Batería LTH L-47-650",
+
+  "vehiculo": "Nissan Versa",
+
+  "anio_vehiculo": "2020",
+
+  "direccion_envio": "Av. Universidad 123, Colonia Centro, Monterrey, Nuevo León, C.P. 64000.",
+
+  "lead_completo": true
+
+}
+
+Caso 4: Producto ambiguo
+
+Cliente:
+
+Necesito unas balatas.
+
+Respuesta esperada:
+
+Claro. Para ayudarte mejor, ¿me puedes compartir el modelo, año de tu vehículo y la ciudad donde te encuentras?
+
+Caso 5: Producto fuera de catálogo
+
+Cliente:
+
+¿Tienen filtro de aceite para March?
+
+Respuesta esperada:
+
+Por ahora no encontré filtros de aceite en el catálogo disponible. Puedo registrar tu solicitud para que un asesor la revise. ¿Me compartes tu nombre, ciudad y estado?
+
+NOTA: En cada caso de prueba se sugiere una respuesta esperada como referencia. Sin embargo, el candidato deberá demostrar cómo su chatbot maneja cada escenario dentro de un flujo conversacional completo, explicando qué datos identifica, qué datos captura, qué información consulta, qué decisión toma, qué datos quedan pendientes, y cómo actualiza el estado del lead.
+
+Preguntas de cierre
+
+¿Qué riesgos existen si la IA recomienda compatibilidades incorrectas?
+
+¿Qué información debería venir siempre desde la API y no desde el modelo?
+
+¿Cómo evitarías que el chatbot invente datos?
+
+¿Cómo manejarías una conversación donde el cliente da información incompleta?
+
+¿Qué partes de tu solución escalarían bien y cuáles habría que mejorar?
+
+¿Qué cambiarías si el catálogo tuviera 10,000 productos?
+
+¿Cómo explicarías al dueño de la empresa que un sistema con IA no es completamente determinista y que, aunque puede aportar valor, necesita límites, validaciones y supervisión?
+
+¿Qué pruebas aplicarías a este sistema impulsado por IA para asegurar al dueño de la empresa un alto nivel de confiabilidad antes de usarlo con clientes reales? Considera pruebas funcionales, casos límite, errores de integración, alucinaciones de la IA, calidad de los datos y trazabilidad de las respuestas.
+
+Si tuvieras más tiempo de trabajo, ¿qué mejoras implementarías para que esta solución fuera más robusta, escalable y confiable en producción?
+
+Entregables
+
+Workflow de n8n exportado.
+
+Código o configuración de la API.
+
+Base de datos o evidencia de almacenamiento.
+
+Ejemplo del catálogo estructurado.
+
+Evidencia de conversaciones de prueba.
+
+Registro de leads generado por el chatbot.
+
+Documento breve explicando la arquitectura y la elección del modelo LLM.
+
+Preguntas de cierre.
+
+Herramientas permitidas
+
+Se recomienda utilizar n8n como orquestador principal de la solución. En caso de no poder utilizarlo, el candidato podrá implementar la solución utilizando JavaScript o Python.
+
+Se permite utilizar modelos LLM gratuitos, modelos con prueba gratuita o modelos de bajo costo. Algunas opciones posibles son:
+
+Gemini desde Google AI Studio
+
+GroqCloud
+
+OpenRouter con modelos gratuitos
+
+OpenAI API
+
+Modelos locales mediante Ollama
+
+Cualquier otro proveedor o SDK que el candidato prefiera
+
+El candidato deberá indicar:
+
+Qué modelo utilizó.
+
+Por qué lo eligió.
+
+En qué partes de la solución lo aplicó.
+
+Qué limitaciones detectó.
+
+Cómo evitaría que el modelo invente información técnica o comercial.

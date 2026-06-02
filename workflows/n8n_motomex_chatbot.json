@@ -1,0 +1,120 @@
+{
+  "id": "7f4adf6e-4b3f-4a4e-81f8-3f4bb3d6f8e2",
+  "name": "Motomex Chatbot Refacciones",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "motomex-chatbot",
+        "responseMode": "lastNode",
+        "options": {
+          "responseData": "firstEntryJson"
+        }
+      },
+      "id": "webhook-in",
+      "name": "Entrada WhatsApp/Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "2d16db65-08b9-4e75-94c2-6164f8317d2e"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:1234/v1/chat/completions",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"meta-llama-3.1-8b-instruct\",\n  \"temperature\": 0,\n  \"max_tokens\": 220,\n  \"messages\": [\n    {\"role\": \"system\", \"content\": \"Extrae intencion y entidades de clientes de refacciones. Devuelve solo JSON valido con: nombre, ciudad, estado, producto_interes, categoria, marca, modelo, vehiculo, anio_vehiculo, desea_comprar, direccion_envio. Usa null si falta un dato. No inventes precios, stock ni compatibilidades.\"},\n    {\"role\": \"user\", \"content\": \"={{ $json.body.message || $json.body.text || $json.message || $json.text || '' }}\"}\n  ]\n}",
+        "options": {}
+      },
+      "id": "llm-entities",
+      "name": "LLM Local - Extraer Intencion",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [260, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const webhook = $('Entrada WhatsApp/Webhook').first().json;\nconst body = webhook.body || webhook;\nconst originalMessage = body.message || body.text || webhook.message || webhook.text || '';\nconst sessionId = String(body.session_id || body.phone || body.from || body.sender || 'local-test');\nconst raw = $json.choices?.[0]?.message?.content || '{}';\nlet entities = {};\ntry {\n  const cleaned = raw.replace(/^```json\\s*/i, '').replace(/^```\\s*/i, '').replace(/```$/i, '').trim();\n  entities = JSON.parse(cleaned);\n} catch (error) {\n  entities = {};\n}\nconst text = String(originalMessage).replace(/\\s+/g, ' ').trim();\nconst lower = text.toLowerCase();\nconst nameMatch = text.match(/\\b(?:soy|me llamo|mi nombre es)\\s+([A-Z][a-z]+)\\b/i);\nconst yearMatch = text.match(/\\b(19\\d{2}|20\\d{2})\\b/);\nconst addressMatch = text.match(/(?:direccion|dirección)\\s*(?:es|:)?\\s*(.+)$/i);\nconst cityStateMatch = text.match(/(?:estoy en|vivo en|me encuentro en)\\s+([^,.]+),\\s*([^,.]+)/i);\nconst vehicleForMatch = text.match(/\\bpara\\s+(?:un|una|mi)?\\s*([A-Za-z0-9-]+(?:\\s+[A-Za-z0-9-]+)?)\\b/i);\nif (!entities.nombre && nameMatch) entities.nombre = nameMatch[1];\nif (!entities.anio_vehiculo && yearMatch) entities.anio_vehiculo = yearMatch[1];\nif (addressMatch) {\n  const deterministicAddress = addressMatch[1].trim();\n  if (!entities.direccion_envio || deterministicAddress.length > String(entities.direccion_envio).length) {\n    entities.direccion_envio = deterministicAddress;\n  }\n}\nif ((!entities.ciudad || !entities.estado) && cityStateMatch) { entities.ciudad = cityStateMatch[1].trim(); entities.estado = cityStateMatch[2].trim(); }\nif (/\\bversa\\b/i.test(text)) entities.vehiculo = 'Nissan Versa';\nelse if (/\\bsentra\\b/i.test(text)) entities.vehiculo = /b13/i.test(text) ? 'Nissan Sentra B13' : 'Nissan Sentra';\nelse if (/\\baveo\\b/i.test(text)) entities.vehiculo = 'Chevrolet Aveo';\nelse if (/\\bmarch\\b/i.test(text)) entities.vehiculo = 'Nissan March';\nelse if (vehicleForMatch) entities.vehiculo = vehicleForMatch[1].trim();\nif (/\\bl-47-650\\b/i.test(text)) entities.producto_interes = 'LTH L-47-650';\nif (/filtro de aceite/i.test(text)) { entities.categoria = 'filtro de aceite'; entities.producto_interes = 'filtro de aceite'; }\nelse if (/balatas?/i.test(text)) entities.categoria = 'balatas';\nelse if (/bater/i.test(text)) entities.categoria = 'bateria';\nelse if (/amortiguador/i.test(text)) entities.categoria = 'amortiguador';\nelse if (/banda de distrib/i.test(text)) entities.categoria = 'banda de distribucion';\nelse if (/bomba de agua/i.test(text)) entities.categoria = 'bomba de agua';\nif (/\\b(si|sí),?\\s*(quiero comprar|continuar)|\\b(quiero comprar|lo compro|hacer pedido|mandamelo|mándamelo)\\b/i.test(lower) || entities.direccion_envio) entities.desea_comprar = true;\nconst staticData = $getWorkflowStaticData('global');\nconst previous = staticData[sessionId] || {};\nconst merged = { ...previous };\nfor (const [key, value] of Object.entries(entities)) {\n  if (value !== null && value !== undefined && value !== '') merged[key] = value;\n}\nif (entities.desea_comprar !== true && merged.desea_comprar !== true) merged.desea_comprar = false;\nstaticData[sessionId] = merged;\nconst search = merged.vehiculo || merged.producto_interes || merged.categoria || text;\nreturn [{ json: { sessionId, entities: merged, originalMessage: text, search } }];"
+      },
+      "id": "parse-entities",
+      "name": "Parsear JSON del LLM",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 0]
+    },
+    {
+      "parameters": {
+        "url": "=http://host.docker.internal:8000/productos?q={{ encodeURIComponent($json.search || '') }}",
+        "options": {}
+      },
+      "id": "api-products",
+      "name": "Consultar API Productos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [780, 0],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const incoming = $input.all().map(item => item.json);\nconst products = Array.isArray($json) ? $json : (incoming[0]?.id ? incoming : []);\nconst parsed = $('Parsear JSON del LLM').first().json;\nconst entities = parsed.entities;\nconst vehicle = (entities.vehiculo || '').toLowerCase();\nlet candidates = products;\nif (vehicle) {\n  candidates = products.filter(product => product.compatibilidad_general.some(item => {\n    const compatible = item.toLowerCase();\n    const shortVehicle = vehicle.replace('nissan ', '').replace('chevrolet ', '').replace('volkswagen ', '');\n    return vehicle.includes(compatible) || compatible.includes(shortVehicle);\n  }));\n}\nconst selected = candidates[0] || null;\nconst missing = [];\nif (!entities.vehiculo) missing.push('modelo del vehiculo');\nif (!entities.anio_vehiculo) missing.push('anio del vehiculo');\nif (!entities.ciudad || !entities.estado) missing.push('ciudad y estado');\nlet response;\nconst explicitBuy = /quiero comprar|lo compro|hacer pedido|mandamelo|mándamelo|direccion|dirección/i.test(parsed.originalMessage || '');\nconst wantsToBuy = entities.desea_comprar === true && explicitBuy;\nconst hasShippingAddress = Boolean(entities.direccion_envio && /\\d/.test(entities.direccion_envio));\nif (wantsToBuy && hasShippingAddress) {\n  response = 'Gracias. Registre tu solicitud de compra y la direccion de envio. Un asesor puede validar compatibilidad final antes de surtir el pedido.';\n} else if (!selected) {\n  const category = entities.categoria || entities.producto_interes || 'ese producto';\n  const vehicleText = entities.vehiculo ? ` para ${entities.vehiculo}` : '';\n  response = `Por ahora no encontre ${category}${vehicleText} en el catalogo disponible. Puedo registrar tu solicitud para que un asesor la revise. Me compartes tu nombre, ciudad y estado?`;\n} else if (missing.length) {\n  if ((entities.categoria || '').toLowerCase().includes('balata') && !entities.vehiculo) {\n    response = 'Claro. Para ayudarte mejor, me puedes compartir el modelo, anio de tu vehiculo y la ciudad donde te encuentras?';\n  } else {\n    response = `Claro. Tenemos ${selected.categoria} ${selected.marca} ${selected.modelo} que puede ser compatible de forma general con ${selected.compatibilidad_general.join(', ')}. Para validar mejor, me puedes compartir ${missing.join(', ')}?`;\n  }\n} else if (wantsToBuy && !hasShippingAddress) {\n  response = `Gracias${entities.nombre ? ', ' + entities.nombre : ''}. Para continuar con la compra de ${selected.categoria} ${selected.marca} ${selected.modelo}, me compartes la direccion de envio?`;\n} else {\n  response = `Gracias${entities.nombre ? ', ' + entities.nombre : ''}. ${selected.categoria} ${selected.marca} ${selected.modelo} esta disponible en ${selected.ciudad}, ${selected.estado}, con ${selected.stock} unidades en stock y tiene un precio de $${Number(selected.precio).toLocaleString('es-MX')} ${selected.moneda}. Deseas continuar con la compra o prefieres que un asesor revise primero compatibilidad?`;\n}\nconst staticData = $getWorkflowStaticData('global');\nstaticData[parsed.sessionId] = { ...entities, producto_interes: selected ? `${selected.categoria} ${selected.marca} ${selected.modelo}` : entities.producto_interes };\nreturn [{ json: { response, sessionId: parsed.sessionId, entities: staticData[parsed.sessionId], selectedProduct: selected } }];"
+      },
+      "id": "business-rules",
+      "name": "Reglas Deterministas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1040, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/leads",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"session_id\": {{ JSON.stringify($json.sessionId) }},\n  \"nombre\": {{ JSON.stringify($json.entities.nombre || null) }},\n  \"ciudad\": {{ JSON.stringify($json.entities.ciudad || null) }},\n  \"estado\": {{ JSON.stringify($json.entities.estado || null) }},\n  \"producto_interes\": {{ JSON.stringify($json.selectedProduct ? `${$json.selectedProduct.categoria} ${$json.selectedProduct.marca} ${$json.selectedProduct.modelo}` : ($json.entities.producto_interes || null)) }},\n  \"vehiculo\": {{ JSON.stringify($json.entities.vehiculo || null) }},\n  \"anio_vehiculo\": {{ JSON.stringify($json.entities.anio_vehiculo || null) }},\n  \"direccion_envio\": {{ JSON.stringify($json.entities.direccion_envio || null) }},\n  \"desea_comprar\": {{ $json.entities.desea_comprar === true ? 'true' : 'false' }}\n}",
+        "options": {}
+      },
+      "id": "post-lead",
+      "name": "Registrar Lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1300, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const business = $('Reglas Deterministas').first().json;\nconst lead = $json.id ? $json : null;\nreturn [{ json: { reply: business.response, lead } }];"
+      },
+      "id": "prepare-response",
+      "name": "Preparar Respuesta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 0]
+    }
+  ],
+  "connections": {
+    "Entrada WhatsApp/Webhook": {
+      "main": [[{ "node": "LLM Local - Extraer Intencion", "type": "main", "index": 0 }]]
+    },
+    "LLM Local - Extraer Intencion": {
+      "main": [[{ "node": "Parsear JSON del LLM", "type": "main", "index": 0 }]]
+    },
+    "Parsear JSON del LLM": {
+      "main": [[{ "node": "Consultar API Productos", "type": "main", "index": 0 }]]
+    },
+    "Consultar API Productos": {
+      "main": [[{ "node": "Reglas Deterministas", "type": "main", "index": 0 }]]
+    },
+    "Reglas Deterministas": {
+      "main": [[{ "node": "Registrar Lead", "type": "main", "index": 0 }]]
+    },
+    "Registrar Lead": {
+      "main": [[{ "node": "Preparar Respuesta", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "pinData": {},
+  "versionId": "motomex-local-v3"
+}

@@ -1,0 +1,97 @@
+[
+  {
+    "marca": "LTH",
+    "modelo": "L-47-650",
+    "categoria": "Bateria automotriz",
+    "precio": 2450,
+    "moneda": "MXN",
+    "ciudad": "Monterrey",
+    "estado": "Nuevo Leon",
+    "stock": 8,
+    "compatibilidad_general": ["Nissan Versa", "Chevrolet Aveo", "Volkswagen Jetta"],
+    "especificaciones": {
+      "voltaje": "12V",
+      "amperes_arranque_frio": "650 CCA",
+      "recomendado_para": "Vehiculos compactos y sedanes medianos",
+      "requiere_validacion": "Anio y version del vehiculo"
+    }
+  },
+  {
+    "marca": "Bosch",
+    "modelo": "BP-1290",
+    "categoria": "Balatas delanteras",
+    "precio": 780,
+    "moneda": "MXN",
+    "ciudad": "Guadalajara",
+    "estado": "Jalisco",
+    "stock": 15,
+    "compatibilidad_general": ["Nissan Sentra", "Renault Fluence", "Nissan Tiida"],
+    "especificaciones": {
+      "material": "Ceramico",
+      "ruido": "Baja generacion de ruido",
+      "uso_recomendado": "Conduccion diaria en ciudad"
+    }
+  },
+  {
+    "marca": "Monroe",
+    "modelo": "M-3245",
+    "categoria": "Amortiguador delantero",
+    "precio": 1350,
+    "moneda": "MXN",
+    "ciudad": "Puebla",
+    "estado": "Puebla",
+    "stock": 6,
+    "compatibilidad_general": ["Honda CR-V", "Toyota RAV4", "Mazda CX-5"],
+    "especificaciones": {
+      "sistema": "Suspension delantera",
+      "recomendado_para": "SUVs compactas",
+      "requiere_validacion": "Anio y version del vehiculo"
+    }
+  },
+  {
+    "marca": "Fram",
+    "modelo": "PH-6607",
+    "categoria": "Filtro de aceite",
+    "precio": 185,
+    "moneda": "MXN",
+    "ciudad": "Ciudad de Mexico",
+    "estado": "Ciudad de Mexico",
+    "stock": 42,
+    "compatibilidad_general": ["Toyota Corolla", "Honda Civic", "Nissan Sentra"],
+    "especificaciones": {
+      "tipo": "Mantenimiento preventivo",
+      "motor": "4 cilindros",
+      "cilindrada": "Mediana"
+    }
+  },
+  {
+    "marca": "Gates",
+    "modelo": "T-186",
+    "categoria": "Banda de distribucion",
+    "precio": 620,
+    "moneda": "MXN",
+    "ciudad": "Queretaro",
+    "estado": "Queretaro",
+    "stock": 11,
+    "compatibilidad_general": ["Volkswagen Polo", "Seat Ibiza", "Chevrolet Aveo"],
+    "especificaciones": {
+      "sistema": "Distribucion del motor",
+      "motor": "1.6 litros"
+    }
+  },
+  {
+    "marca": "GMB",
+    "modelo": "GWH-780",
+    "categoria": "Bomba de agua",
+    "precio": 950,
+    "moneda": "MXN",
+    "ciudad": "Leon",
+    "estado": "Guanajuato",
+    "stock": 5,
+    "compatibilidad_general": ["Nissan Tsuru", "Nissan Sentra B13", "Nissan Platina"],
+    "especificaciones": {
+      "sistema": "Refrigeracion del motor",
+      "motor": "GA16"
+    }
+  }
+]
